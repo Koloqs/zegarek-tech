@@ -11,14 +11,16 @@ import {
 } from 'lucide-react'
 import './App.css'
 import { OrbitalClock } from './OrbitalClock'
+import { WorldGlobe } from './WorldGlobe'
+import type { GlobeCity } from './WorldGlobe'
 
-const zones = [
-  { city: 'Warszawa', zone: 'Europe/Warsaw', code: 'PL' },
-  { city: 'Londyn', zone: 'Europe/London', code: 'UK' },
-  { city: 'Nowy Jork', zone: 'America/New_York', code: 'NY' },
-  { city: 'Tokio', zone: 'Asia/Tokyo', code: 'JP' },
-  { city: 'Sydney', zone: 'Australia/Sydney', code: 'AU' },
-  { city: 'Reykjavik', zone: 'Atlantic/Reykjavik', code: 'IS' },
+const zones: GlobeCity[] = [
+  { city: 'Warszawa', zone: 'Europe/Warsaw', code: 'PL', lat: 52.2297, lon: 21.0122 },
+  { city: 'Londyn', zone: 'Europe/London', code: 'UK', lat: 51.5072, lon: -0.1276 },
+  { city: 'Nowy Jork', zone: 'America/New_York', code: 'NY', lat: 40.7128, lon: -74.006 },
+  { city: 'Tokio', zone: 'Asia/Tokyo', code: 'JP', lat: 35.6762, lon: 139.6503 },
+  { city: 'Sydney', zone: 'Australia/Sydney', code: 'AU', lat: -33.8688, lon: 151.2093 },
+  { city: 'Reykjavik', zone: 'Atlantic/Reykjavik', code: 'IS', lat: 64.1466, lon: -21.9426 },
 ]
 
 type Theme = 'light' | 'dark'
@@ -89,6 +91,7 @@ function App() {
   const [focusMode, setFocusMode] = useState<FocusMode>('focus')
   const [focusLeft, setFocusLeft] = useState(focusDurations.focus)
   const [focusRunning, setFocusRunning] = useState(false)
+  const [selectedZone, setSelectedZone] = useState(zones[0].zone)
 
   useEffect(() => {
     const tick = window.setInterval(() => setNow(new Date()), 250)
@@ -157,6 +160,11 @@ function App() {
       left: `${leftHours}h ${String(leftMinutes).padStart(2, '0')}m`,
     }
   }, [now])
+
+  const selectedCity = useMemo(
+    () => zones.find((item) => item.zone === selectedZone) ?? zones[0],
+    [selectedZone],
+  )
 
   const focusProgress =
     ((focusDurations[focusMode] - focusLeft) / focusDurations[focusMode]) * 100
@@ -255,19 +263,42 @@ function App() {
       <section className="world-times" aria-labelledby="world-times-title">
         <div className="section-heading">
           <p className="eyebrow">strefy</p>
-          <h2 id="world-times-title">Zegary światowe</h2>
+          <h2 id="world-times-title">Ziemia czasu</h2>
         </div>
-        <div className="zone-grid">
-          {zones.map((item) => (
-            <article className="zone-card" data-zone={item.code} key={item.zone}>
-              <div>
-                <span>{item.city}</span>
-                <em>{getZoneLabel(now, item.zone)}</em>
-              </div>
-              <strong>{formatTime(now, item.zone)}</strong>
-              <small>{item.code}</small>
+
+        <div className="world-stage">
+          <div className="globe-panel">
+            <WorldGlobe
+              cities={zones}
+              selectedZone={selectedCity.zone}
+              onSelect={setSelectedZone}
+            />
+            <article className="selected-city-card" aria-live="polite">
+              <span>{selectedCity.code}</span>
+              <h3>{selectedCity.city}</h3>
+              <strong>{formatTime(now, selectedCity.zone)}</strong>
+              <p>{getZoneLabel(now, selectedCity.zone)}</p>
             </article>
-          ))}
+          </div>
+
+          <div className="zone-grid">
+            {zones.map((item) => (
+              <button
+                className={`zone-card ${item.zone === selectedCity.zone ? 'is-active' : ''}`}
+                data-zone={item.code}
+                key={item.zone}
+                onClick={() => setSelectedZone(item.zone)}
+                type="button"
+              >
+                <div>
+                  <span>{item.city}</span>
+                  <em>{getZoneLabel(now, item.zone)}</em>
+                </div>
+                <strong>{formatTime(now, item.zone)}</strong>
+                <small>{item.code}</small>
+              </button>
+            ))}
+          </div>
         </div>
       </section>
 
