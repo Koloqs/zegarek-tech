@@ -52,8 +52,7 @@
   text-align: center;
 }
 
-.icon-button,
-.round-action {
+.icon-button {
   display: inline-grid;
   place-items: center;
   width: 42px;
@@ -70,30 +69,28 @@
     background 180ms ease;
 }
 
-.icon-button:hover,
-.round-action:hover {
+.icon-button:hover {
   border-color: color-mix(in srgb, var(--accent), var(--border) 25%);
   transform: translateY(-2px);
 }
 
 .icon-button:focus-visible,
-.round-action:focus-visible,
-.segmented-control button:focus-visible {
+.zone-card:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 3px;
 }
 
-.clock-hero {
+.globe-hero {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 0.94fr) minmax(380px, 1.06fr);
+  grid-template-columns: minmax(340px, 0.72fr) minmax(430px, 1.28fr);
   align-items: center;
   gap: clamp(28px, 6vw, 86px);
-  min-height: min(740px, calc(100svh - 78px));
+  min-height: min(820px, calc(100svh - 78px));
   padding: clamp(34px, 7vw, 86px) 0 clamp(28px, 6vw, 64px);
 }
 
-.clock-hero::before {
+.globe-hero::before {
   position: absolute;
   inset: 8% -12% auto 46%;
   z-index: -1;
@@ -106,7 +103,7 @@
   opacity: 0.52;
 }
 
-.hero-copy {
+.globe-copy {
   min-width: 0;
 }
 
@@ -121,19 +118,26 @@
 
 h1,
 h2,
+h3,
 p {
   margin: 0;
 }
 
 h1 {
-  max-width: 660px;
+  max-width: 760px;
   color: var(--text-strong);
-  font-size: clamp(4rem, 8.4vw, 7.65rem);
-  font-variant-numeric: tabular-nums;
+  font-size: clamp(4.2rem, 9.2vw, 8.8rem);
   font-weight: 930;
   letter-spacing: 0;
   line-height: 0.9;
   text-wrap: balance;
+}
+
+h2 {
+  color: var(--text-strong);
+  font-size: clamp(1.9rem, 4vw, 3.3rem);
+  letter-spacing: 0;
+  line-height: 0.96;
 }
 
 .date-line {
@@ -144,138 +148,126 @@ h1 {
   font-weight: 650;
 }
 
-.day-rail {
+.selected-time-panel {
   width: min(100%, 620px);
   margin-top: 34px;
-}
-
-.day-rail-track {
-  height: 12px;
-  overflow: hidden;
+  padding: clamp(18px, 3vw, 26px);
   border: 1px solid var(--border);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--surface-raised), transparent 18%);
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 84% 16%, color-mix(in srgb, var(--accent), transparent 72%), transparent 34%),
+    linear-gradient(145deg, color-mix(in srgb, var(--surface), transparent 3%), color-mix(in srgb, var(--surface-raised), transparent 10%));
+  box-shadow: var(--shadow-soft);
 }
 
-.day-rail-track span {
+.selected-time-panel span {
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 920;
+  letter-spacing: 0.12em;
+}
+
+.selected-time-panel h2 {
+  margin-top: 8px;
+}
+
+.selected-time-panel p,
+.selected-time-panel small {
   display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: linear-gradient(90deg, var(--accent), var(--amber), var(--coral));
-  box-shadow: 0 0 22px color-mix(in srgb, var(--accent), transparent 52%);
-}
-
-.day-rail-meta {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: 10px;
   color: var(--text-soft);
-  font-size: 0.86rem;
-  font-variant-numeric: tabular-nums;
   font-weight: 760;
 }
 
-.hero-visual {
-  position: relative;
-  overflow: clip;
-  min-height: clamp(360px, 48vw, 600px);
-  perspective: 1200px;
-}
-
-.orbital-clock {
-  position: absolute;
-  inset: -8% -8% -2%;
-  width: 116%;
-  height: 110%;
-  filter: drop-shadow(0 38px 80px rgba(0, 0, 0, 0.22));
-}
-
-.analog-clock {
-  position: absolute;
-  right: clamp(12px, 3vw, 42px);
-  bottom: clamp(18px, 5vw, 68px);
-  width: min(45vw, 278px);
-  min-width: 210px;
-  aspect-ratio: 1;
-  border: 1px solid color-mix(in srgb, var(--paper), transparent 12%);
-  border-radius: 50%;
-  background:
-    radial-gradient(circle at 50% 50%, transparent 0 8%, color-mix(in srgb, var(--paper), transparent 88%) 8.5% 9%, transparent 9.5%),
-    radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--surface), transparent 20%) 0 58%, transparent 59%),
-    conic-gradient(from 230deg, var(--accent), var(--amber), var(--coral), var(--ink), var(--accent));
-  box-shadow:
-    inset 0 0 34px color-mix(in srgb, var(--ink), transparent 86%),
-    0 28px 70px rgba(0, 0, 0, 0.2);
-  transform: rotateX(12deg) rotateY(-14deg);
-}
-
-.tick {
-  position: absolute;
+.selected-time-panel strong {
+  display: block;
+  margin: 18px 0 10px;
   color: var(--text-strong);
-  font-size: 0.9rem;
-  font-weight: 920;
+  font-size: clamp(3rem, 8vw, 6.4rem);
+  font-variant-numeric: tabular-nums;
+  font-weight: 930;
+  line-height: 0.92;
 }
 
-.tick-12 {
-  top: 18px;
-  left: 50%;
-  transform: translateX(-50%);
+.globe-panel {
+  position: relative;
+  min-height: clamp(520px, 62vw, 780px);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 68% 26%, color-mix(in srgb, var(--accent), transparent 66%), transparent 28%),
+    radial-gradient(circle at 22% 74%, color-mix(in srgb, var(--coral), transparent 76%), transparent 28%),
+    linear-gradient(145deg, color-mix(in srgb, var(--surface), transparent 0%), color-mix(in srgb, var(--surface-raised), transparent 12%));
+  box-shadow: var(--shadow-soft);
 }
 
-.tick-3 {
-  top: 50%;
-  right: 22px;
-  transform: translateY(-50%);
-}
-
-.tick-6 {
-  bottom: 18px;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.tick-9 {
-  top: 50%;
-  left: 22px;
-  transform: translateY(-50%);
-}
-
-.hand {
+.world-globe-canvas {
   position: absolute;
-  right: 50%;
-  bottom: 50%;
-  width: 5px;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+}
+
+.globe-hint {
+  position: absolute;
+  left: clamp(14px, 3vw, 28px);
+  bottom: clamp(14px, 3vw, 28px);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  max-width: calc(100% - 28px);
+  padding: 11px 13px;
+  border: 1px solid color-mix(in srgb, var(--border), transparent 18%);
   border-radius: 999px;
-  background: var(--text-strong);
-  transform-origin: 50% 100%;
+  color: var(--text-strong);
+  background: color-mix(in srgb, var(--surface), transparent 8%);
+  box-shadow: var(--shadow-tiny);
+  backdrop-filter: blur(18px);
+  font-size: 0.86rem;
+  font-weight: 820;
 }
 
-.hour-hand {
-  height: 27%;
-}
-
-.minute-hand {
-  width: 4px;
-  height: 36%;
-}
-
-.second-hand {
-  width: 2px;
-  height: 40%;
-  background: var(--coral);
-}
-
-.pin {
+.globe-live-chip {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 18px;
-  height: 18px;
-  border: 4px solid var(--surface);
-  border-radius: 50%;
-  background: var(--coral);
-  transform: translate(-50%, -50%);
+  top: 16px;
+  left: 16px;
+  display: none;
+  max-width: calc(100% - 32px);
+  padding: 12px 13px;
+  border: 1px solid color-mix(in srgb, var(--border), transparent 18%);
+  border-radius: 8px;
+  color: var(--text-strong);
+  background: color-mix(in srgb, var(--surface), transparent 8%);
+  box-shadow: var(--shadow-tiny);
+  backdrop-filter: blur(18px);
+}
+
+.globe-live-chip span,
+.globe-live-chip small {
+  display: block;
+  color: var(--text-soft);
+  font-size: 0.72rem;
+  font-weight: 850;
+}
+
+.globe-live-chip span {
+  color: var(--accent);
+  letter-spacing: 0.1em;
+}
+
+.globe-live-chip strong {
+  display: block;
+  margin: 4px 0 2px;
+  color: var(--text-strong);
+  font-size: 1.6rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.globe-live-chip small {
+  max-width: 220px;
+  overflow-wrap: anywhere;
 }
 
 .rhythm-strip {
@@ -286,8 +278,7 @@ h1 {
 }
 
 .metric-card,
-.zone-card,
-.focus-panel {
+.zone-card {
   border: 1px solid var(--border);
   border-radius: 8px;
   background:
@@ -339,8 +330,7 @@ meter::-moz-meter-bar {
   background: linear-gradient(90deg, var(--accent), var(--amber));
 }
 
-.world-times,
-.focus-studio {
+.world-times {
   display: grid;
   grid-template-columns: minmax(170px, 240px) minmax(0, 1fr);
   gap: 24px;
@@ -354,86 +344,15 @@ meter::-moz-meter-bar {
   top: 82px;
 }
 
-h2 {
-  color: var(--text-strong);
-  font-size: clamp(1.9rem, 4vw, 3.3rem);
-  letter-spacing: 0;
-  line-height: 0.96;
-}
-
 .world-stage {
   display: grid;
   gap: 16px;
   min-width: 0;
 }
 
-.globe-panel {
-  position: relative;
-  min-height: clamp(360px, 48vw, 560px);
-  overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background:
-    radial-gradient(circle at 68% 26%, color-mix(in srgb, var(--accent), transparent 66%), transparent 28%),
-    radial-gradient(circle at 22% 74%, color-mix(in srgb, var(--coral), transparent 76%), transparent 28%),
-    linear-gradient(145deg, color-mix(in srgb, var(--surface), transparent 0%), color-mix(in srgb, var(--surface-raised), transparent 12%));
-  box-shadow: var(--shadow-soft);
-}
-
-.world-globe-canvas {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  cursor: grab;
-}
-
-.selected-city-card {
-  position: absolute;
-  right: clamp(14px, 3vw, 28px);
-  bottom: clamp(14px, 3vw, 28px);
-  width: min(330px, calc(100% - 28px));
-  padding: 18px;
-  border: 1px solid color-mix(in srgb, var(--border), transparent 18%);
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--surface), transparent 9%);
-  box-shadow: var(--shadow-soft);
-  backdrop-filter: blur(18px);
-}
-
-.selected-city-card span {
-  color: var(--accent);
-  font-size: 0.78rem;
-  font-weight: 920;
-  letter-spacing: 0.12em;
-}
-
-.selected-city-card h3 {
-  margin: 8px 0 12px;
-  color: var(--text-strong);
-  font-size: clamp(1.5rem, 3vw, 2.35rem);
-  letter-spacing: 0;
-  line-height: 0.94;
-}
-
-.selected-city-card strong {
-  display: block;
-  color: var(--text-strong);
-  font-size: clamp(2rem, 5vw, 3.25rem);
-  font-variant-numeric: tabular-nums;
-  line-height: 0.95;
-}
-
-.selected-city-card p {
-  margin-top: 12px;
-  color: var(--text-soft);
-  font-size: 0.9rem;
-  font-weight: 820;
-}
-
 .zone-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 14px;
 }
 
@@ -513,99 +432,28 @@ h2 {
   position: absolute;
   right: 18px;
   bottom: 16px;
-}
-
-.focus-panel {
-  display: grid;
-  grid-template-columns: minmax(220px, 300px) minmax(0, 1fr);
+  display: inline-flex;
   align-items: center;
-  gap: clamp(22px, 5vw, 52px);
-  padding: clamp(20px, 4vw, 32px);
-}
-
-.focus-orbit {
-  display: grid;
-  width: min(100%, 260px);
-  aspect-ratio: 1;
-  place-items: center;
-  border-radius: 50%;
-  background:
-    radial-gradient(circle at 50% 50%, var(--surface) 0 55%, transparent 56%),
-    conic-gradient(var(--coral) var(--focus-progress), color-mix(in srgb, var(--surface-muted), transparent 10%) 0);
-  box-shadow:
-    inset 0 0 0 1px var(--border),
-    var(--shadow-soft);
-}
-
-.focus-orbit span {
-  color: var(--text-strong);
-  font-size: clamp(2.4rem, 7vw, 4.2rem);
-  font-variant-numeric: tabular-nums;
-  font-weight: 930;
-}
-
-.focus-controls {
-  display: grid;
-  gap: 22px;
-  justify-items: start;
-}
-
-.segmented-control {
-  display: inline-grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4px;
-  padding: 4px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: var(--surface-muted);
-}
-
-.segmented-control button {
-  min-width: 92px;
-  min-height: 38px;
-  border: 0;
-  border-radius: 999px;
-  color: var(--text);
-  background: transparent;
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.9rem;
-  font-weight: 840;
-}
-
-.segmented-control button.is-active {
-  color: var(--text-strong);
-  background: var(--surface);
-  box-shadow: var(--shadow-tiny);
-}
-
-.icon-row {
-  display: flex;
-  gap: 10px;
+  gap: 5px;
 }
 
 @media (max-width: 920px) {
-  .clock-hero,
-  .world-times,
-  .focus-studio,
-  .focus-panel {
+  .globe-hero,
+  .world-times {
     grid-template-columns: 1fr;
   }
 
-  .clock-hero {
+  .globe-hero {
     min-height: auto;
   }
 
-  .hero-visual {
-    min-height: min(86vw, 520px);
+  .globe-panel {
+    min-height: min(112vw, 620px);
     order: -1;
   }
 
-  .analog-clock {
-    right: 50%;
-    bottom: 8%;
-    width: min(62vw, 280px);
-    transform: translateX(50%) rotateX(12deg) rotateY(-12deg);
+  .globe-live-chip {
+    display: block;
   }
 
   .section-heading {
@@ -614,10 +462,6 @@ h2 {
 
   .zone-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .globe-panel {
-    min-height: min(104vw, 540px);
   }
 }
 
@@ -636,13 +480,11 @@ h2 {
   }
 
   h1 {
-    font-size: clamp(3.2rem, 17vw, 5.4rem);
+    font-size: clamp(3.4rem, 17vw, 5.8rem);
   }
 
-  .day-rail-meta,
-  .zone-card div {
-    align-items: flex-start;
-    flex-direction: column;
+  .selected-time-panel strong {
+    font-size: clamp(2.7rem, 16vw, 5rem);
   }
 
   .rhythm-strip,
@@ -650,22 +492,15 @@ h2 {
     grid-template-columns: 1fr;
   }
 
-  .selected-city-card {
-    position: absolute;
+  .zone-card div {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .globe-hint {
+    left: 12px;
     right: 12px;
-    bottom: 12px;
-    width: calc(100% - 24px);
-  }
-
-  .focus-controls {
-    justify-items: stretch;
-  }
-
-  .segmented-control {
-    width: 100%;
-  }
-
-  .segmented-control button {
-    min-width: 0;
+    justify-content: center;
+    border-radius: 8px;
   }
 }

@@ -1,18 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
-import type { CSSProperties } from 'react'
-import {
-  BellRing,
-  Moon,
-  Pause,
-  Play,
-  RotateCcw,
-  Sparkles,
-  Sun,
-} from 'lucide-react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Crosshair, MapPinned, Moon, Sparkles, Sun } from 'lucide-react'
+import tzLookup from 'tz-lookup'
 import './App.css'
-import { OrbitalClock } from './OrbitalClock'
 import { WorldGlobe } from './WorldGlobe'
-import type { GlobeCity } from './WorldGlobe'
+import type { GlobeCity, GlobeSelection } from './WorldGlobe'
 
 const zones: GlobeCity[] = [
   { city: 'Warszawa', zone: 'Europe/Warsaw', code: 'PL', lat: 52.2297, lon: 21.0122 },
@@ -21,15 +12,11 @@ const zones: GlobeCity[] = [
   { city: 'Tokio', zone: 'Asia/Tokyo', code: 'JP', lat: 35.6762, lon: 139.6503 },
   { city: 'Sydney', zone: 'Australia/Sydney', code: 'AU', lat: -33.8688, lon: 151.2093 },
   { city: 'Reykjavik', zone: 'Atlantic/Reykjavik', code: 'IS', lat: 64.1466, lon: -21.9426 },
+  { city: 'Kair', zone: 'Africa/Cairo', code: 'EG', lat: 30.0444, lon: 31.2357 },
+  { city: 'Rio de Janeiro', zone: 'America/Sao_Paulo', code: 'BR', lat: -22.9068, lon: -43.1729 },
 ]
 
 type Theme = 'light' | 'dark'
-type FocusMode = 'focus' | 'break'
-
-const focusDurations: Record<FocusMode, number> = {
-  focus: 25 * 60,
-  break: 5 * 60,
-}
 
 function formatTime(date: Date, timeZone = 'Europe/Warsaw') {
   return new Intl.DateTimeFormat('pl-PL', {
@@ -40,28 +27,14 @@ function formatTime(date: Date, timeZone = 'Europe/Warsaw') {
   }).format(date)
 }
 
-function formatShortTime(date: Date, timeZone = 'Europe/Warsaw') {
-  return new Intl.DateTimeFormat('pl-PL', {
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone,
-  }).format(date)
-}
-
-function formatDate(date: Date) {
+function formatDate(date: Date, timeZone = 'Europe/Warsaw') {
   return new Intl.DateTimeFormat('pl-PL', {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
     year: 'numeric',
-    timeZone: 'Europe/Warsaw',
+    timeZone,
   }).format(date)
-}
-
-function formatFocus(seconds: number) {
-  const minutes = Math.floor(seconds / 60)
-  const rest = seconds % 60
-  return `${String(minutes).padStart(2, '0')}:${String(rest).padStart(2, '0')}`
 }
 
 function getZoneLabel(date: Date, timeZone: string) {
@@ -85,13 +58,46 @@ function getTheme(): Theme {
     : 'light'
 }
 
+function distanceKm(from: { lat: number; lon: number }, to: { lat: number; lon: number }) {
+  const radius = 6371
+  const fromLat = (from.lat * Math.PI) / 180
+  const toLat = (to.lat * Math.PI) / 180
+  const deltaLat = ((to.lat - from.lat) * Math.PI) / 180
+  const deltaLon = ((to.lon - from.lon) * Math.PI) / 180
+  const a =
+    Math.sin(deltaLat / 2) ** 2 +
+    Math.cos(fromLat) * Math.cos(toLat) * Math.sin(deltaLon / 2) ** 2
+  return radius * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
+function nearestCity(lat: number, lon: number) {
+  return zones.reduce((best, city) => {
+    const distance = distanceKm({ lat, lon }, city)
+    return distance < best.distance ? { city, distance } : best
+  }, { city: zones[0], distance: Number.POSITIVE_INFINITY })
+}
+
+function selectionFromCity(city: GlobeCity): GlobeSelection {
+  return {
+    code: city.code,
+    label: city.city,
+    lat: city.lat,
+    lon: city.lon,
+    nearestCity: city.city,
+    zone: city.zone,
+  }
+}
+
+function coordinatesLabel(lat: number, lon: number) {
+  const ns = lat >= 0 ? 'N' : 'S'
+  const ew = lon >= 0 ? 'E' : 'W'
+  return `${Math.abs(lat).toFixed(1)}°${ns}, ${Math.abs(lon).toFixed(1)}°${ew}`
+}
+
 function App() {
   const [now, setNow] = useState(() => new Date())
   const [theme, setTheme] = useState<Theme>(getTheme)
-  const [focusMode, setFocusMode] = useState<FocusMode>('focus')
-  const [focusLeft, setFocusLeft] = useState(focusDurations.focus)
-  const [focusRunning, setFocusRunning] = useState(false)
-  const [selectedZone, setSelectedZone] = useState(zones[0].zone)
+  const [selection, setSelection] = useState<GlobeSelection>(() => selectionFromCity(zones[0]))
 
   useEffect(() => {
     const tick = window.setInterval(() => setNow(new Date()), 250)
@@ -103,33 +109,25 @@ function App() {
     window.localStorage.setItem('zegarek-theme', theme)
   }, [theme])
 
-  useEffect(() => {
-    if (!focusRunning) return
+  const resolveSelection = useCallback((lat: number, lon: number): GlobeSelection => {
+    const nearest = nearestCity(lat, lon)
+    let zone = 'Etc/UTC'
 
-    const timer = window.setInterval(() => {
-      setFocusLeft((current) => {
-        if (current <= 1) {
-          setFocusRunning(false)
-          return 0
-        }
-        return current - 1
-      })
-    }, 1000)
-
-    return () => window.clearInterval(timer)
-  }, [focusRunning])
-
-  const hands = useMemo(() => {
-    const seconds = now.getSeconds() + now.getMilliseconds() / 1000
-    const minutes = now.getMinutes() + seconds / 60
-    const hours = (now.getHours() % 12) + minutes / 60
+    try {
+      zone = tzLookup(lat, lon)
+    } catch {
+      zone = 'Etc/UTC'
+    }
 
     return {
-      hour: hours * 30,
-      minute: minutes * 6,
-      second: seconds * 6,
+      code: 'GPS',
+      label: coordinatesLabel(lat, lon),
+      lat,
+      lon,
+      nearestCity: nearest.city.city,
+      zone,
     }
-  }, [now])
+  }, [])
 
   const dayStats = useMemo(() => {
     const start = new Date(now)
@@ -139,9 +137,6 @@ function App() {
     const elapsed = now.getTime() - start.getTime()
     const dayLength = end.getTime() - start.getTime()
     const percent = Math.min(100, Math.max(0, (elapsed / dayLength) * 100))
-    const leftSeconds = Math.max(0, Math.round((end.getTime() - now.getTime()) / 1000))
-    const leftHours = Math.floor(leftSeconds / 3600)
-    const leftMinutes = Math.floor((leftSeconds % 3600) / 60)
 
     const weekDay = (now.getDay() + 6) % 7
     const weekPercent = ((weekDay * dayLength + elapsed) / (7 * dayLength)) * 100
@@ -157,28 +152,8 @@ function App() {
       day: percent,
       week: weekPercent,
       year: yearPercent,
-      left: `${leftHours}h ${String(leftMinutes).padStart(2, '0')}m`,
     }
   }, [now])
-
-  const selectedCity = useMemo(
-    () => zones.find((item) => item.zone === selectedZone) ?? zones[0],
-    [selectedZone],
-  )
-
-  const focusProgress =
-    ((focusDurations[focusMode] - focusLeft) / focusDurations[focusMode]) * 100
-
-  const switchFocusMode = (mode: FocusMode) => {
-    setFocusMode(mode)
-    setFocusLeft(focusDurations[mode])
-    setFocusRunning(false)
-  }
-
-  const resetFocus = () => {
-    setFocusLeft(focusDurations[focusMode])
-    setFocusRunning(false)
-  }
 
   return (
     <main className="app-shell">
@@ -189,7 +164,7 @@ function App() {
           </span>
           <span>zegarek.tech</span>
         </a>
-        <p className="topbar-time">{formatShortTime(now)} Warszawa</p>
+        <p className="topbar-time">{formatTime(now)} Warszawa</p>
         <button
           className="icon-button"
           type="button"
@@ -201,43 +176,43 @@ function App() {
         </button>
       </header>
 
-      <section className="clock-hero" aria-labelledby="main-clock-title">
-        <div className="hero-copy">
-          <p className="eyebrow">czas lokalny</p>
-          <h1 id="main-clock-title">{formatTime(now)}</h1>
-          <p className="date-line">{formatDate(now)}</p>
+      <section className="globe-hero" aria-labelledby="main-clock-title">
+        <div className="globe-copy">
+          <p className="eyebrow">interaktywny czas świata</p>
+          <h1 id="main-clock-title">Kliknij Ziemię</h1>
+          <p className="date-line">
+            Wybierz dowolny punkt na globie. Strona wyliczy jego strefę czasową
+            i pokaże lokalną godzinę.
+          </p>
 
-          <div className="day-rail" aria-label="Postęp dnia">
-            <div className="day-rail-track">
-              <span style={{ width: `${dayStats.day}%` }}></span>
+          <div className="selected-time-panel" aria-live="polite">
+            <div>
+              <span>{selection.code}</span>
+              <h2>{selection.label}</h2>
+              <p>Najbliżej: {selection.nearestCity}</p>
             </div>
-            <div className="day-rail-meta">
-              <span>{dayStats.day.toFixed(1)}% dnia</span>
-              <span>do północy {dayStats.left}</span>
-            </div>
+            <strong>{formatTime(now, selection.zone)}</strong>
+            <small>
+              {getZoneLabel(now, selection.zone)} · {formatDate(now, selection.zone)}
+            </small>
           </div>
         </div>
 
-        <div className="hero-visual">
-          <OrbitalClock date={now} />
-          <div className="analog-clock" aria-hidden="true">
-            <span className="tick tick-12">12</span>
-            <span className="tick tick-3">3</span>
-            <span className="tick tick-6">6</span>
-            <span className="tick tick-9">9</span>
-            <span
-              className="hand hour-hand"
-              style={{ transform: `rotate(${hands.hour}deg)` }}
-            ></span>
-            <span
-              className="hand minute-hand"
-              style={{ transform: `rotate(${hands.minute}deg)` }}
-            ></span>
-            <span
-              className="hand second-hand"
-              style={{ transform: `rotate(${hands.second}deg)` }}
-            ></span>
-            <span className="pin"></span>
+        <div className="globe-panel is-primary">
+          <WorldGlobe
+            cities={zones}
+            selected={selection}
+            onSelect={setSelection}
+            resolveSelection={resolveSelection}
+          />
+          <div className="globe-live-chip" aria-live="polite">
+            <span>{selection.code}</span>
+            <strong>{formatTime(now, selection.zone)}</strong>
+            <small>{selection.label}</small>
+          </div>
+          <div className="globe-hint">
+            <Crosshair size={17} />
+            <span>Kliknij kontynent, ocean albo marker miasta</span>
           </div>
         </div>
       </section>
@@ -262,32 +237,18 @@ function App() {
 
       <section className="world-times" aria-labelledby="world-times-title">
         <div className="section-heading">
-          <p className="eyebrow">strefy</p>
-          <h2 id="world-times-title">Ziemia czasu</h2>
+          <p className="eyebrow">punkty startowe</p>
+          <h2 id="world-times-title">Miasta</h2>
         </div>
 
         <div className="world-stage">
-          <div className="globe-panel">
-            <WorldGlobe
-              cities={zones}
-              selectedZone={selectedCity.zone}
-              onSelect={setSelectedZone}
-            />
-            <article className="selected-city-card" aria-live="polite">
-              <span>{selectedCity.code}</span>
-              <h3>{selectedCity.city}</h3>
-              <strong>{formatTime(now, selectedCity.zone)}</strong>
-              <p>{getZoneLabel(now, selectedCity.zone)}</p>
-            </article>
-          </div>
-
           <div className="zone-grid">
             {zones.map((item) => (
               <button
-                className={`zone-card ${item.zone === selectedCity.zone ? 'is-active' : ''}`}
+                className={`zone-card ${item.zone === selection.zone && selection.code !== 'GPS' ? 'is-active' : ''}`}
                 data-zone={item.code}
                 key={item.zone}
-                onClick={() => setSelectedZone(item.zone)}
+                onClick={() => setSelection(selectionFromCity(item))}
                 type="button"
               >
                 <div>
@@ -295,73 +256,12 @@ function App() {
                   <em>{getZoneLabel(now, item.zone)}</em>
                 </div>
                 <strong>{formatTime(now, item.zone)}</strong>
-                <small>{item.code}</small>
+                <small>
+                  <MapPinned size={14} />
+                  {item.code}
+                </small>
               </button>
             ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="focus-studio" aria-labelledby="focus-title">
-        <div className="section-heading">
-          <p className="eyebrow">focus</p>
-          <h2 id="focus-title">Minutnik</h2>
-        </div>
-
-        <div className="focus-panel">
-          <div
-            className="focus-orbit"
-            style={{ '--focus-progress': `${focusProgress}%` } as CSSProperties}
-          >
-            <span>{formatFocus(focusLeft)}</span>
-          </div>
-
-          <div className="focus-controls" aria-label="Sterowanie minutnikiem">
-            <div className="segmented-control">
-              <button
-                className={focusMode === 'focus' ? 'is-active' : ''}
-                type="button"
-                onClick={() => switchFocusMode('focus')}
-              >
-                Praca
-              </button>
-              <button
-                className={focusMode === 'break' ? 'is-active' : ''}
-                type="button"
-                onClick={() => switchFocusMode('break')}
-              >
-                Pauza
-              </button>
-            </div>
-
-            <div className="icon-row">
-              <button
-                className="round-action"
-                type="button"
-                onClick={() => setFocusRunning((current) => !current)}
-                aria-label={focusRunning ? 'Pauza' : 'Start'}
-                title={focusRunning ? 'Pauza' : 'Start'}
-              >
-                {focusRunning ? <Pause size={21} /> : <Play size={21} />}
-              </button>
-              <button
-                className="round-action"
-                type="button"
-                onClick={resetFocus}
-                aria-label="Reset"
-                title="Reset"
-              >
-                <RotateCcw size={20} />
-              </button>
-              <button
-                className="round-action"
-                type="button"
-                aria-label="Sygnał"
-                title="Sygnał"
-              >
-                <BellRing size={20} />
-              </button>
-            </div>
           </div>
         </div>
       </section>
